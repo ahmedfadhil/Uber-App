@@ -104,7 +104,6 @@ public class YourLocation extends FragmentActivity implements LocationListener {
         }
 
 
-
     }
 
     @Override
@@ -129,10 +128,48 @@ public class YourLocation extends FragmentActivity implements LocationListener {
 
             mMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())).title("Your Location"));
 
-
+            updateLocation(location);
         }
 
 
+    }
+
+    public void updateLocation(Location location) {
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 10));
+
+        mMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())).title("Your Location"));
+
+        if (requestActive == true) {
+            final ParseGeoPoint userLocation = new ParseGeoPoint(location.getLatitude(), location.getLongitude());
+
+            ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("Requests");
+
+            query.whereEqualTo("requesterUsername", ParseUser.getCurrentUser().getUsername());
+
+            query.findInBackground(new FindCallback<ParseObject>() {
+                @Override
+                public void done(List<ParseObject> objects, ParseException e) {
+
+                    if (e == null) {
+
+                        if (objects.size() > 0) {
+
+                            for (ParseObject object : objects) {
+
+//                                object.deleteInBackground();
+                                object.put("requesterLocation", userLocation);
+                                object.saveInBackground();
+                            }
+
+
+                        }
+
+                    }
+
+                }
+            });
+
+        }
     }
 
     @Override
@@ -194,10 +231,7 @@ public class YourLocation extends FragmentActivity implements LocationListener {
 
         mMap.clear();
 
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 10));
-
-        mMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())).title("Your Location"));
-
+        updateLocation(location);
     }
 
     @Override
